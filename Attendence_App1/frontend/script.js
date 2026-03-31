@@ -34,7 +34,7 @@ async function init() {
     resetUItoZero();
     updateDate();
     updateLiveClock();
-    
+
     // Automatic Reset on Refresh as requested
     try {
         await fetch(`${API_URL}/reset?employee_id=${EMPLOYEE_ID}`, { method: 'POST' });
@@ -74,24 +74,24 @@ function updateUI(data) {
     checkInTime = data.check_in ? new Date(data.check_in.replace(' ', 'T')) : null;
     breakStartTime = data.break_start ? new Date(data.break_start.replace(' ', 'T')) : null;
     totalBreakSeconds = data.total_break_seconds || 0;
-    
+
     // Update times
     const inTime = data.check_in ? formatTime(data.check_in) : '--:--';
     const outTime = data.check_out ? formatTime(data.check_out) : '--:--';
     checkInDisplay.innerText = inTime;
     checkOutDisplay.innerText = outTime;
-    
+
     // Update Nav times
     document.getElementById('nav-in').innerText = `In: ${inTime}`;
     document.getElementById('nav-out').innerText = `Out: ${outTime}`;
-    
+
     console.log("Status Data:", data);
     console.log("Check-in Time:", checkInTime);
-    
+
     // Update main button state
     mainBtn.classList.remove('check-in', 'check-out', 'hidden');
     breakBtn.classList.remove('btn-green', 'btn-red', 'hidden');
-    
+
     if (currentStatus === 'checked_in') {
         hoursLabel.innerText = 'Effective Hours:';
         actionText.innerText = 'Clock Out';
@@ -125,7 +125,7 @@ function updateUI(data) {
     // Update Attendance Tab Details
     document.getElementById('det-in').innerText = data.check_in ? formatTimeWithSeconds(data.check_in) : '--:--:--';
     document.getElementById('det-out').innerText = data.check_out ? formatTimeWithSeconds(data.check_out) : '--:--:--';
-    
+
     // Render Breaks List
     const breaksList = document.getElementById('breaks-list');
     if (data.breaks && data.breaks.length > 0) {
@@ -140,7 +140,7 @@ function updateUI(data) {
     }
 
     document.getElementById('det-total-break').innerText = formatDuration(data.total_break_seconds / 3600);
-    
+
     // Calculate and show total stay duration
     if (checkInTime && !isNaN(checkInTime.getTime())) {
         const endTime = data.check_out ? new Date(data.check_out.replace(' ', 'T')) : new Date();
@@ -153,7 +153,7 @@ function updateUI(data) {
     const effectiveStr = data.effective_hours !== undefined ? formatDuration(data.effective_hours) : '00:00:00';
     const totalStr = document.getElementById('det-total-stay').innerText;
     const breakStr = document.getElementById('det-total-break').innerText;
-    
+
     document.getElementById('det-effective').innerHTML = `${effectiveStr} <small style="font-size: 10px; opacity: 0.6; font-weight: normal; margin-left: 5px;">(${totalStr} + ${breakStr})</small>`;
 
     // Handle Alerts
@@ -236,22 +236,22 @@ function updateBreakDisplay() {
 
 function updateEffectiveHours() {
     if (!checkInTime || isNaN(checkInTime.getTime())) return;
-    
+
     const now = new Date();
     const totalSecondsAtWork = (now - checkInTime) / 1000;
     const effectiveSeconds = totalSecondsAtWork + totalBreakSeconds; // Changed to + as requested
     const hours = Math.max(0, effectiveSeconds / 3600);
-    
+
     effectiveHoursDisplay.innerHTML = `${formatDuration(hours)} <span class="info-icon">i</span>`;
-    
+
     // Also update total stay in attendance tab if visible
     const totalStayHours = totalSecondsAtWork / 3600;
     const detTotalStay = document.getElementById('det-total-stay');
     if (detTotalStay) detTotalStay.innerText = formatDuration(totalStayHours);
-    
+
     const detEffective = document.getElementById('det-effective');
     if (detEffective) {
-        detEffective.innerHTML = `${formatDuration(hours)} <small style="font-size: 10px; opacity: 0.6; font-weight: normal; margin-left: 5px;">(${formatDuration(totalStayHours)} + ${formatDuration(totalBreakSeconds/3600)})</small>`;
+        detEffective.innerHTML = `${formatDuration(hours)} <small style="font-size: 10px; opacity: 0.6; font-weight: normal; margin-left: 5px;">(${formatDuration(totalStayHours)} + ${formatDuration(totalBreakSeconds / 3600)})</small>`;
     }
 }
 
@@ -338,27 +338,38 @@ async function handleCheckIn() {
     mainBtn.classList.add('hidden'); // Hide button to show face
     cameraOverlay.innerText = 'Recognizing...';
     cameraOverlay.classList.remove('hidden', 'success');
-    
+
     // Simulate processing
     setTimeout(async () => {
         try {
             cameraOverlay.innerText = 'OK!';
             cameraOverlay.classList.add('success');
-            
-            const response = await fetch(`${API_URL}/check-in?employee_id=${EMPLOYEE_ID}`, { method: 'POST' });
-            
+
+            const now = new Date();
+
+            const response = await fetch(`${API_URL}/check-in`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    employee_id: EMPLOYEE_ID,
+                    time: now.toISOString()
+                })
+            });
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || 'Server error');
             }
-            
+
             const data = await response.json();
-            
+
             setTimeout(() => {
                 stopCamera();
                 cameraOverlay.classList.add('hidden');
                 updateUI(data);
-            }, 1000); 
+            }, 1000);
         } catch (error) {
             alert('Failed to check in: ' + error.message);
             stopCamera();
@@ -377,14 +388,23 @@ async function handleCheckOut() {
         try {
             cameraOverlay.innerText = 'OK!';
             cameraOverlay.classList.add('success');
-            
-            const response = await fetch(`${API_URL}/check-out?employee_id=${EMPLOYEE_ID}`, { method: 'POST' });
+
+            const response = await fetch(`${API_URL}/check-out`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    employee_id: EMPLOYEE_ID,
+                    time: new Date().toISOString()
+                })
+            });
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || 'Server error');
             }
             const data = await response.json();
-            
+
             setTimeout(() => {
                 stopCamera();
                 cameraOverlay.classList.add('hidden');
@@ -400,7 +420,7 @@ async function handleCheckOut() {
 
 async function handleBreakStart() {
     await startCamera();
-    mainBtn.classList.add('hidden'); 
+    mainBtn.classList.add('hidden');
     breakBtn.classList.add('hidden'); // Hide break button too
     cameraOverlay.innerText = 'Recognizing...';
     cameraOverlay.classList.remove('hidden', 'success');
@@ -409,14 +429,14 @@ async function handleBreakStart() {
         try {
             cameraOverlay.innerText = 'OK!';
             cameraOverlay.classList.add('success');
-            
+
             const response = await fetch(`${API_URL}/break-start?employee_id=${EMPLOYEE_ID}`, { method: 'POST' });
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || 'Server error');
             }
             const data = await response.json();
-            
+
             setTimeout(() => {
                 stopCamera();
                 cameraOverlay.classList.add('hidden');
@@ -442,14 +462,14 @@ async function handleBreakEnd() {
         try {
             cameraOverlay.innerText = 'OK!';
             cameraOverlay.classList.add('success');
-            
+
             const response = await fetch(`${API_URL}/break-end?employee_id=${EMPLOYEE_ID}`, { method: 'POST' });
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || 'Server error');
             }
             const data = await response.json();
-            
+
             setTimeout(() => {
                 stopCamera();
                 cameraOverlay.classList.add('hidden');
