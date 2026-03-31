@@ -93,7 +93,7 @@ def send_email(to_email: str, subject: str, body: str):
         print(f"Server: smtp.gmail.com:465")
         
         # Using SMTP_SSL with a timeout to catch hanging connections
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 587, timeout=10) as server:
             server.set_debuglevel(2) # Even more verbose
             print("Action: Logging in...")
             server.login(SENDER_EMAIL, EMAIL_PASSWORD)
