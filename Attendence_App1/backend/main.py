@@ -1,4 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, relationship, joinedload
 import datetime
@@ -25,6 +28,8 @@ SENDER_EMAIL = "madasuvenky263@gmail.com"
 
 import os
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+print(f"DEBUG: EMAIL_PASSWORD loaded: {'Yes (Ends with ' + EMAIL_PASSWORD[-4:] + ')' if EMAIL_PASSWORD else 'No (None)'}")
+
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -264,9 +269,11 @@ def get_status(employee_id: str, db: Session = Depends(get_db)):
         
         if open_break:
             duration_sec = (get_now_ist() - open_break.start_time).total_seconds()
+            print(f"DEBUG: Break duration for {record.name}: {duration_sec}s (Target: 60s)")
             
             # 1 minute alert (60 sec) for testing (originally 30 mins)
             if duration_sec > 60 and not open_break.alert_sent_30m:
+                print(f"DEBUG: Triggering 1-minute alert for {record.name}")
                 open_break.alert_sent_30m = get_now_ist()
                 send_email(
                     record.email, 
