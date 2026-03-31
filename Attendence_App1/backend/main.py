@@ -4,15 +4,15 @@ from sqlalchemy.orm import Session, relationship, joinedload
 import datetime
 import smtplib
 from email.mime.text import MIMEText
-import database
-import schemas
+from backend import database
+from backend import schemas
 from typing import List
 
 # --- EMAIL CONFIGURATION ---
 SENDER_EMAIL = "madasuvenky263@gmail.com"
 
-EMAIL_PASSWORD = "bchx gnjh yfnl oduq" 
-# ---------------------------
+import os
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 from fastapi.staticfiles import StaticFiles
 import os
