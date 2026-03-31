@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session, relationship, joinedload
 import datetime
 import smtplib
 from email.mime.text import MIMEText
-from backend import database
-from backend import schemas
+from . import database
+from . import schemas
 from typing import List
 
 # --- EMAIL CONFIGURATION ---
