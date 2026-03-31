@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Pro | Smart Face Recognition</title>
+    <link rel="stylesheet" href="style.css?v=4.0">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-card user-profile">
+            <div class="clock-info">
+                <h2 id="live-clock">--:--:--</h2>
+                <p id="current-date" class="date-label">Monday, March 30</p>
+            </div>
+            <div class="settings-btn">
+                <i class="fas fa-cog"></i>
+            </div>
+        </header>
+
+        <!-- Top Navigation Bar -->
+        <nav class="top-nav glass-card">
+            <div class="nav-item active" id="nav-home">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </div>
+            <div class="nav-item" id="nav-attendance">
+                <i class="fas fa-calendar-check"></i>
+                <span>Attendance</span>
+                <div class="nav-times">
+                    <span id="nav-in">In: --:--</span>
+                    <span id="nav-out">Out: --:--</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Home View -->
+        <div id="home-view" class="tab-content">
+            <!-- Time Summaries -->
+            <div class="time-grid">
+                <div class="glass-card time-card green">
+                    <div class="card-header">
+                        <span id="check-in-time">--:--</span>
+                        <i class="fas fa-sign-in-alt"></i>
+                    </div>
+                    <p>Clock In</p>
+                </div>
+                <div class="glass-card time-card red">
+                    <div class="card-header">
+                        <span id="check-out-time">--:--</span>
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <p>Clock Out</p>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+            <div id="break-alert-banner" class="alert-banner hidden"></div>
+
+            <!-- Effective Hours -->
+            <div class="hours-display">
+                <p class="label" id="hours-label">Effective Hours:</p>
+                <h1 id="effective-hours">--:--:-- <span class="info-icon">i</span></h1>
+            </div>
+
+            <!-- Main Action Button -->
+            <div class="action-container">
+                <div id="camera-container" class="camera-preview hidden">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" class="hidden"></canvas>
+                    <div id="camera-overlay" class="hidden">Recognizing...</div>
+                </div>
+                <button id="main-action-btn" class="main-button pulse">
+                    <div class="icon-circle">
+                        <i id="action-icon" class="fas fa-fingerprint"></i>
+                    </div>
+                    <span id="action-text">Clock In</span>
+                </button>
+            </div>
+
+            <!-- Secondary Actions -->
+            <div class="secondary-actions">
+                <button id="break-btn" class="glass-button">Take a Break</button>
+            </div>
+        </div>
+
+        <!-- Attendance View -->
+        <div id="attendance-view" class="tab-content hidden">
+            <div class="glass-card attendance-details">
+                <h3>Daily Summary</h3>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <label>Clock In</label>
+                        <span id="det-in">--:--:--</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Clock Out</label>
+                        <span id="det-out">--:--:--</span>
+                    </div>
+                    <div class="breaks-section">
+                        <h4>Break History</h4>
+                        <div id="breaks-list">
+                            <!-- Breaks will be injected here -->
+                            <div class="no-breaks">No breaks taken yet</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Total Duration (In-Out)</label>
+                        <span id="det-total-stay">00:00:00</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Total Break Time</label>
+                        <span id="det-total-break">00:00:00</span>
+                    </div>
+                    <div class="detail-item total">
+                        <label>Effective Working Hours</label>
+                        <span id="det-effective">00:00:00</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer/Reset -->
+            <div class="footer-actions">
+                <a href="#" id="reset-link">Reset App (Fresh Start)</a>
+                <div style="margin-top: 15px;">
+                    <button onclick="handleTestEmail()" style="background: #f0f0f0; border: 1px solid #ccc; color: #333; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+                        <i class="fas fa-paper-plane"></i> Send Test Email to Me
+                    </button>
+                </div>
+                <p style="margin-top: 10px; font-size: 0.75rem; color: #999;">v4.0 | Advanced Debugging Enabled</p>
+            </div>
+        </div>
+
+    <script src="script.js?v=4.0"></script>
+</body>
+</html>
