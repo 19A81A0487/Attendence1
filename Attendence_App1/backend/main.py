@@ -9,8 +9,13 @@ import pytz
 
 import smtplib
 from email.mime.text import MIMEText
-from . import database
-from . import schemas
+try:
+    import database
+    import schemas
+except ImportError:
+    from . import database
+    from . import schemas
+
 from typing import List
 
 # --- TIMEZONE CONFIGURATION ---
@@ -32,20 +37,34 @@ print(f"DEBUG: EMAIL_PASSWORD loaded: {'Yes (Ends with ' + EMAIL_PASSWORD[-4:] +
 
 
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 import os
+
+load_dotenv()
 
 app = FastAPI()
 
 # Mount frontend static files relative to backend
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-app.mount("/frontend", StaticFiles(directory=os.path.join(BASE_DIR, "frontend")), name="frontend")
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+print(f"DEBUG: BASE_DIR: {BASE_DIR}")
+print(f"DEBUG: FRONTEND_DIR: {FRONTEND_DIR}")
+print(f"DEBUG: FRONTEND_DIR exists: {os.path.exists(FRONTEND_DIR)}")
+
+app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
+
 
 
 # Redirect root to frontend index
-from fastapi.responses import RedirectResponse
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def read_root():
+    print("DEBUG: Root endpoint hit! Redirecting to /frontend/index.html")
     return RedirectResponse(url="/frontend/index.html")
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "frontend_exists": os.path.exists(FRONTEND_DIR)}
+
 
 # Enable CORS for frontend
 app.add_middleware(
