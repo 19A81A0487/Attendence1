@@ -2,11 +2,23 @@ from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, relationship, joinedload
 import datetime
+import pytz
+
 import smtplib
 from email.mime.text import MIMEText
 from . import database
 from . import schemas
 from typing import List
+
+# --- TIMEZONE CONFIGURATION ---
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_now_ist():
+    return datetime.datetime.now(IST).replace(tzinfo=None)
+
+def get_today_ist():
+    return datetime.datetime.now(IST).date()
+
 
 # --- EMAIL CONFIGURATION ---
 SENDER_EMAIL = "madasuvenky263@gmail.com"
@@ -96,7 +108,7 @@ def get_db():
 
 @app.post("/check-in")
 def check_in(employee_id: str, db: Session = Depends(get_db)):
-    date_str = datetime.date.today().isoformat()
+    date_str = get_today_ist().isoformat()
     record = db.query(database.Attendance).options(joinedload(database.Attendance.breaks)).filter(
         database.Attendance.employee_id == employee_id,
         database.Attendance.date == date_str
@@ -112,12 +124,12 @@ def check_in(employee_id: str, db: Session = Depends(get_db)):
             email="madasuvenky263@gmail.com",
             date=date_str,
             status="checked_in",
-            check_in=datetime.datetime.now()
+            check_in=get_now_ist()
         )
         db.add(record)
     else:
         record.status = "checked_in"
-        record.check_in = datetime.datetime.now()
+        record.check_in = get_now_ist()
         record.check_out = None
         record.total_break_seconds = 0.0
         record.effective_hours = 0.0
@@ -131,7 +143,7 @@ def check_in(employee_id: str, db: Session = Depends(get_db)):
 
 @app.post("/break-start")
 def break_start(employee_id: str, db: Session = Depends(get_db)):
-    date_str = datetime.date.today().isoformat()
+    date_str = get_today_ist().isoformat()
     record = db.query(database.Attendance).options(joinedload(database.Attendance.breaks)).filter(
         database.Attendance.employee_id == employee_id,
         database.Attendance.date == date_str
@@ -141,7 +153,7 @@ def break_start(employee_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Must be checked in to start break")
 
     record.status = "on_break"
-    record.break_start = datetime.datetime.now() 
+    record.break_start = get_now_ist() 
     
     # Create new break log entry
     new_break = database.BreakLog(
@@ -156,7 +168,7 @@ def break_start(employee_id: str, db: Session = Depends(get_db)):
 
 @app.post("/break-end")
 def break_end(employee_id: str, db: Session = Depends(get_db)):
-    date_str = datetime.date.today().isoformat()
+    date_str = get_today_ist().isoformat()
     record = db.query(database.Attendance).options(joinedload(database.Attendance.breaks)).filter(
         database.Attendance.employee_id == employee_id,
         database.Attendance.date == date_str
@@ -172,19 +184,19 @@ def break_end(employee_id: str, db: Session = Depends(get_db)):
     ).order_by(database.BreakLog.id.desc()).first()
     
     if open_break:
-        open_break.end_time = datetime.datetime.now()
+        open_break.end_time = get_now_ist()
         break_duration = (open_break.end_time - open_break.start_time).total_seconds()
         record.total_break_seconds += break_duration
     
     record.status = "checked_in"
-    record.break_end = datetime.datetime.now()
+    record.break_end = get_now_ist()
     db.commit()
     db.refresh(record)
     return record
 
 @app.post("/check-out")
 def check_out(employee_id: str, db: Session = Depends(get_db)):
-    date_str = datetime.date.today().isoformat()
+    date_str = get_today_ist().isoformat()
     record = db.query(database.Attendance).options(joinedload(database.Attendance.breaks)).filter(
         database.Attendance.employee_id == employee_id,
         database.Attendance.date == date_str
@@ -195,7 +207,7 @@ def check_out(employee_id: str, db: Session = Depends(get_db)):
 
     if record.status == "on_break":
         # Automatically end break
-        end_time = datetime.datetime.now()
+        end_time = get_now_ist()
         
         # Also close the BreakLog entry
         open_break = db.query(database.BreakLog).filter(
@@ -207,7 +219,7 @@ def check_out(employee_id: str, db: Session = Depends(get_db)):
             break_duration = (open_break.end_time - open_break.start_time).total_seconds()
             record.total_break_seconds += break_duration
 
-    record.check_out = datetime.datetime.now()
+    record.check_out = get_now_ist()
     record.status = "checked_out"
     
     # Calculate effective hours (Total Duration + Total Break Seconds as requested)
@@ -221,7 +233,7 @@ def check_out(employee_id: str, db: Session = Depends(get_db)):
 
 @app.post("/reset")
 def reset_status(employee_id: str, db: Session = Depends(get_db)):
-    today = datetime.date.today()
+    today = get_today_ist()
     record = db.query(database.Attendance).filter(
         database.Attendance.employee_id == employee_id,
         database.Attendance.date == today.isoformat()
@@ -233,7 +245,7 @@ def reset_status(employee_id: str, db: Session = Depends(get_db)):
 
 @app.get("/status/{employee_id}")
 def get_status(employee_id: str, db: Session = Depends(get_db)):
-    date_str = datetime.date.today().isoformat()
+    date_str = get_today_ist().isoformat()
     record = db.query(database.Attendance).options(joinedload(database.Attendance.breaks)).filter(
         database.Attendance.employee_id == employee_id,
         database.Attendance.date == date_str
@@ -251,11 +263,11 @@ def get_status(employee_id: str, db: Session = Depends(get_db)):
         ).order_by(database.BreakLog.id.desc()).first()
         
         if open_break:
-            duration_sec = (datetime.datetime.now() - open_break.start_time).total_seconds()
+            duration_sec = (get_now_ist() - open_break.start_time).total_seconds()
             
             # 1 minute alert (60 sec) for testing (originally 30 mins)
             if duration_sec > 60 and not open_break.alert_sent_30m:
-                open_break.alert_sent_30m = datetime.datetime.now()
+                open_break.alert_sent_30m = get_now_ist()
                 send_email(
                     record.email, 
                     "Break Reminder", 
@@ -265,7 +277,7 @@ def get_status(employee_id: str, db: Session = Depends(get_db)):
             
             # 1 hour alert (3600 sec)
             if duration_sec > 3600 and not open_break.alert_sent_1h:
-                open_break.alert_sent_1h = datetime.datetime.now()
+                open_break.alert_sent_1h = get_now_ist()
                 send_email(
                     record.email, 
                     "URGENT: Break Warning (1 Hour)", 
