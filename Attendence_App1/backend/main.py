@@ -22,7 +22,7 @@ app = FastAPI()
 # Mount frontend static files relative to backend
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app.mount("/frontend", StaticFiles(directory=os.path.join(BASE_DIR, "frontend")), name="frontend")
-app.mount("/assets", StaticFiles(directory=os.path.join(BASE_DIR, "assets")), name="assets")
+
 
 # Redirect root to frontend index
 from fastapi.responses import RedirectResponse
