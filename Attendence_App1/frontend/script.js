@@ -345,18 +345,7 @@ async function handleCheckIn() {
             cameraOverlay.innerText = 'OK!';
             cameraOverlay.classList.add('success');
 
-            const now = new Date();
-
-            const response = await fetch(`${API_URL}/check-in`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    employee_id: EMPLOYEE_ID,
-                    time: now.toISOString()
-                })
-            });
+            const response = await fetch(`${API_URL}/check-in?employee_id=${EMPLOYEE_ID}`, { method: 'POST' });
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -389,16 +378,7 @@ async function handleCheckOut() {
             cameraOverlay.innerText = 'OK!';
             cameraOverlay.classList.add('success');
 
-            const response = await fetch(`${API_URL}/check-out`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    employee_id: EMPLOYEE_ID,
-                    time: new Date().toISOString()
-                })
-            });
+            const response = await fetch(`${API_URL}/check-out?employee_id=${EMPLOYEE_ID}`, { method: 'POST' });
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || 'Server error');
